@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" x:Class="Recipe_Browser.DbView">   
+        <ScrollViewer>
+                <StackPanel>
+                        <StackPanel Margin="10">
+                                <TextBox Name="DbSearch" Watermark="Recipe Search" KeyUp="SearchRecipes"></TextBox>
+                        </StackPanel> 
+                        <Grid ColumnDefinitions= "1* 5* 1* 5*">
+                                <TextBlock Grid.Column="0" Margin="0 0 5 0">Name: </TextBlock>
+                                <TextBox Grid.Column="1" Name="RecipeNameInput"></TextBox>
+                                <TextBlock Grid.Column="2" Margin="20 0 5 0">Book: </TextBlock>
+                                <TextBox Grid.Column="3" Name="BookNameInput"></TextBox>
+                        </Grid>
+                        <StackPanel Margin="0 10">
+                                <TextBlock>Ingredients: </TextBlock>
+                                <TextBox Name="IngredientsInput" AcceptsReturn="True" TextWrapping="Wrap" Margin="5" Height="150" ScrollViewer.IsScrollChainingEnabled="True" Watermark="Weight, Measurement, Ingredient. Seperate ingredients with a line break e.g 250 g plain flour"></TextBox>
+                        </StackPanel>    
+                        <StackPanel Margin="0 10">
+                                <TextBlock>Instructions: </TextBlock>
+                                <TextBox Name="InstructionsInput" AcceptsReturn="True" TextWrapping="Wrap" Margin="5" Height="150" ScrollViewer.IsScrollChainingEnabled="True"></TextBox>
+                        </StackPanel>      
+                        <StackPanel Margin="0 10">
+                                <TextBlock>Notes: </TextBlock>
+                                <TextBox Name="NotesInput" AcceptsReturn="True" TextWrapping="Wrap" Margin="5" Height="150" ScrollViewer.IsScrollChainingEnabled="True"></TextBox>
+                        </StackPanel>    
+                        <StackPanel Margin="0 10">
+                                <TextBlock>Photos: </TextBlock>
+                                <TextBox Name="PhotosInput" AcceptsReturn="True" TextWrapping="Wrap" Margin="5" Watermark="Seperate Photo Names With Enter" Height="50" ScrollViewer.IsScrollChainingEnabled="True"></TextBox>
+                        </StackPanel> 
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 20 10"> 
+                                <Button Click="DeleteEntry" Name="DeleteButton" Content="Delete"/>
+                                <Button Click="ResetForm" Name="FormReset" Content="Reset" Margin="10 0 10 0"/>
+                                <Button Click="SaveEntry" Name="FormSave" Content="Save"/>
+                        </StackPanel>
+                </StackPanel>
+        </ScrollViewer>    
+</UserControl>
+
