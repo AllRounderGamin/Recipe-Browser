@@ -1,10 +1,11 @@
 using Avalonia.Controls;
-using Avalonia.Controls.Templates;
+using System.IO;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia.Media.Imaging;
 
 namespace Recipe_Browser;
 
@@ -12,11 +13,13 @@ public partial class RecipeView : UserControl
 {
 
     private static readonly RecipeContext db = new();
-    public List<Recipe> SelectedRecipes = [];
-    public int SelectedIndex = 0;
+    private List<Recipe> SelectedRecipes = [];
+    private int SelectedIndex = 0;
+    private string? ImageFolderPath;
 
     public RecipeView()
     {
+        getImageFolder();
         InitializeComponent();
     }
 
@@ -84,14 +87,67 @@ public partial class RecipeView : UserControl
         }
     }
 
+    public void ChangeImage(object sender, RoutedEventArgs args){
+        if (args.Source is not Control source || SelectedRecipes.Count < 1)
+        {
+            return;
+        }
+        switch(source.Name){
+            case "PreviousImage":
+                RecipeImages.Previous();
+                return;
+            case "NextImage":
+                RecipeImages.Next();
+                return;
+        }
+
+    }
+
     public void LoadRecipe(){
         if (SelectedRecipes.Count < 1){
             return;
         }
         Recipe SelectedRecipe = SelectedRecipes[SelectedIndex];
+        LoadImages(SelectedRecipe);
         RecipeName.Text = SelectedRecipe.Name;
         BookName.Text = SelectedRecipe.Book;
         TextWindow.Text = SelectedRecipe.Instructions;
+    }
+
+    private void LoadImages(Recipe recipe){
+        RecipeImages.Items.Clear();
+        string[] Photos = recipe.Photos.Split("\n");
+        if (ImageFolderPath == null){
+            return;
+        }
+        foreach (string photo in Photos){
+            if (File.Exists(ImageFolderPath+photo)){
+                Image newImage = new(){Source= new Bitmap(ImageFolderPath+photo)};
+                RecipeImages.Items.Add(newImage);
+            }
+        }
+    }
+
+    private void getImageFolder(){
+        var folder = Environment.SpecialFolder.LocalApplicationData;
+        var path = Environment.GetFolderPath(folder);
+        string SettingsPath = Path.Join(path, "RecipeBrowser/RecipeBrowserSettings.txt");
+        if (!File.Exists(SettingsPath)){
+            ImageFolderPath = null;
+            StreamWriter sw = File.AppendText(SettingsPath);
+            sw.Close();
+            Console.WriteLine("Created Settings File");
+            return;
+        }
+        StreamReader file = new(SettingsPath);
+        string? imageUrl = file.ReadLine();
+        if (Directory.Exists(imageUrl)){
+            ImageFolderPath = imageUrl;
+        } else {
+            ImageFolderPath = null;
+            Console.WriteLine("Invalid Image Path");
+        }
+        file.Close();
     }
 
 }

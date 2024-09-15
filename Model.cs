@@ -13,7 +13,7 @@ public class RecipeContext : DbContext
     {
         var folder = Environment.SpecialFolder.LocalApplicationData;
         var path = Environment.GetFolderPath(folder);
-        DbPath = System.IO.Path.Join(path, "recipes.db");
+        DbPath = System.IO.Path.Join(path, "RecipeBrowser/Recipes.db");
     }
 
     // The following configures EF to create a Sqlite database file in the
