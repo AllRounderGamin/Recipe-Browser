@@ -12,14 +12,12 @@ namespace Recipe_Browser;
 public partial class RecipeView : UserControl
 {
 
-    private static readonly RecipeContext db = new();
+    private static readonly RecipeManager RM = RecipeManager.Instance;
     private List<Recipe> SelectedRecipes = [];
     private int SelectedIndex = 0;
-    private string? ImageFolderPath;
 
     public RecipeView()
     {
-        getImageFolder();
         InitializeComponent();
     }
 
@@ -28,7 +26,7 @@ public partial class RecipeView : UserControl
             return;
         }
         // Editor prefers String.Contains(String, StringComparison), however EF Framework Core cannot parse that, hence this is done instead
-        List<Recipe> queryResult = [.. db.Recipes.Where(recipe => recipe.Name.ToUpper().Contains(RecipeSearch.Text.ToUpper()))];
+        List<Recipe> queryResult = [.. RecipeManager.DB.Recipes.Where(recipe => recipe.Name.ToUpper().Contains(RecipeSearch.Text.ToUpper()))];
         if (queryResult.Count > 0){
             SelectedRecipes = queryResult;
             SelectedIndex = 0;
@@ -47,7 +45,7 @@ public partial class RecipeView : UserControl
             case "IngredientsButton":
                 TextWindow.Text = "";
                 if (SelectedRecipe.Ingredients.Count == 0){
-                    db.Entry(SelectedRecipe)
+                    RecipeManager.DB.Entry(SelectedRecipe)
                         .Collection(recipe => recipe.Ingredients)
                         .Load();
                 }
@@ -103,7 +101,7 @@ public partial class RecipeView : UserControl
 
     }
 
-    public void LoadRecipe(){
+    private void LoadRecipe(){
         if (SelectedRecipes.Count < 1){
             return;
         }
@@ -115,6 +113,7 @@ public partial class RecipeView : UserControl
     }
 
     private void LoadImages(Recipe recipe){
+        string? ImageFolderPath = RM.ImageFolderPath;
         RecipeImages.Items.Clear();
         string[] Photos = recipe.Photos.Split("\n");
         if (ImageFolderPath == null){
@@ -127,28 +126,4 @@ public partial class RecipeView : UserControl
             }
         }
     }
-
-    private void getImageFolder(){
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        string SettingsPath = Path.Join(path, "RecipeBrowser/RecipeBrowserSettings.txt");
-        if (!File.Exists(SettingsPath)){
-            ImageFolderPath = null;
-            StreamWriter sw = File.AppendText(SettingsPath);
-            sw.Close();
-            Console.WriteLine("Created Settings File");
-            return;
-        }
-        StreamReader file = new(SettingsPath);
-        string? imageUrl = file.ReadLine();
-        if (Directory.Exists(imageUrl)){
-            ImageFolderPath = imageUrl;
-        } else {
-            ImageFolderPath = null;
-            Console.WriteLine("Invalid Image Path");
-        }
-        file.Close();
-    }
-
 }
-

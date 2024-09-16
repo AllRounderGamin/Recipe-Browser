@@ -4,13 +4,15 @@ using Avalonia.Input;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Recipe_Browser;
 
 public partial class DbView : UserControl
 {
-    public Recipe? SelectedRecipe = null;
-    private static readonly RecipeContext db = new();
+    private List<Recipe> SelectedRecipes = [];
+    private int SelectedIndex = 0;
+    private static readonly RecipeManager RM = RecipeManager.Instance;
 
     public DbView()
     {
@@ -19,25 +21,47 @@ public partial class DbView : UserControl
 
 
     public void SaveEntry(object sender, RoutedEventArgs args){
+        Recipe SelectedRecipe = SelectedRecipes[SelectedIndex];
             if (SelectedRecipe == null){
                 Recipe newRecipe = new();
                 if (CreateRecipeObj(newRecipe) == 0){
-                    db.Add(newRecipe);
-                    db.SaveChanges();
+                    RecipeManager.DB.Add(newRecipe);
+                    RecipeManager.DB.SaveChanges();
                 }
             } else{
                 if (CreateRecipeObj(SelectedRecipe) == 0){
-                    db.Update(SelectedRecipe);
-                    db.SaveChanges();
+                    RecipeManager.DB.Update(SelectedRecipe);
+                    RecipeManager.DB.SaveChanges();
                 }
             }
             ResetForm(sender, args);
         }
 
 
+   public void ChangeRecipe(object sender, RoutedEventArgs args){
+        if (args.Source is not Control source || SelectedRecipes.Count < 1)
+        {
+            return;
+        }
+        switch (source.Name){
+            case "PrevRecipeButton":
+                if(SelectedIndex == 0){
+                    SelectedIndex = SelectedRecipes.Count - 1;
+                } else {SelectedIndex--;}
+                LoadRecipe();
+                return;
+            case "NextRecipeButton":
+                if (SelectedIndex == SelectedRecipes.Count - 1){
+                    SelectedIndex = 0;
+                } else {SelectedIndex++;}
+                LoadRecipe();
+                return;
+        }
+    }
+
 
     public int CreateRecipeObj(Recipe Obj){
-        if (!(String.IsNullOrEmpty(RecipeNameInput.Text) || String.IsNullOrEmpty(BookNameInput.Text) || String.IsNullOrEmpty(IngredientsInput.Text) || String.IsNullOrEmpty(InstructionsInput.Text) || String.IsNullOrEmpty(NotesInput.Text) || String.IsNullOrEmpty(PhotosInput.Text))){
+        if (!(string.IsNullOrEmpty(RecipeNameInput.Text) || string.IsNullOrEmpty(BookNameInput.Text) || string.IsNullOrEmpty(IngredientsInput.Text) || string.IsNullOrEmpty(InstructionsInput.Text) || string.IsNullOrEmpty(NotesInput.Text) || string.IsNullOrEmpty(PhotosInput.Text))){
             Obj.Name = RecipeNameInput.Text;
             Obj.Book = BookNameInput.Text;
             Obj.Instructions = InstructionsInput.Text;
@@ -52,7 +76,7 @@ public partial class DbView : UserControl
                         ingredientData[2] = ingredientData[2] + " " + ingredientData[index];
                     }
                 }
-                if (Int32.TryParse(ingredientData[0], out int ingredientAmount))
+                if (int.TryParse(ingredientData[0], out int ingredientAmount))
                 {
                     Ingredient newIngredient = new()
                     {
@@ -77,7 +101,7 @@ public partial class DbView : UserControl
     }
 
     public void ResetForm(object sender, RoutedEventArgs args){
-        SelectedRecipe = null;
+        SelectedRecipes.Clear();
         DbSearch.Text = null;
         RecipeNameInput.Text = null;
         BookNameInput.Text = null;
@@ -92,30 +116,63 @@ public partial class DbView : UserControl
             return;
         }
         // Editor prefers String.Contains(String, StringComparison), however EF Framework Core cannot parse that, hence this is done instead
-        List<Recipe> queryResult = [.. db.Recipes.Where(recipe => recipe.Name.ToUpper().Contains(DbSearch.Text.ToUpper()))];
+        List<Recipe> queryResult = [.. RecipeManager.DB.Recipes.Where(recipe => recipe.Name.ToUpper().Contains(DbSearch.Text.ToUpper()))];
         if (queryResult.Count > 0){
-            SelectedRecipe = queryResult[0];
-            RecipeNameInput.Text = SelectedRecipe.Name;
-            BookNameInput.Text = SelectedRecipe.Book;
-            InstructionsInput.Text = SelectedRecipe.Instructions;
-            NotesInput.Text = SelectedRecipe.Notes;
-            PhotosInput.Text = SelectedRecipe.Photos;
-
-            db.Entry(SelectedRecipe)
-                .Collection(recipe => recipe.Ingredients)
-                .Load();
-            foreach (Ingredient ingredient in SelectedRecipe.Ingredients){
-                IngredientsInput.Text = IngredientsInput.Text + ingredient.Amount + " " + ingredient.Measurement + " " + ingredient.Name + "\n";
-            }
+            SelectedRecipes = queryResult;
+            SelectedIndex = 0;
+            LoadRecipe();
         }
     }
 
+    private void LoadRecipe(){
+        if (SelectedRecipes.Count < 1){
+            return;
+        }
+        Recipe SelectedRecipe = SelectedRecipes[SelectedIndex];
+        RecipeNameInput.Text = SelectedRecipe.Name;
+        BookNameInput.Text = SelectedRecipe.Book;
+        InstructionsInput.Text = SelectedRecipe.Instructions;
+        NotesInput.Text = SelectedRecipe.Notes;
+        PhotosInput.Text = SelectedRecipe.Photos;
+
+        RecipeManager.DB.Entry(SelectedRecipe)
+            .Collection(recipe => recipe.Ingredients)
+            .Load();
+        IngredientsInput.Text = "";
+        foreach (Ingredient ingredient in SelectedRecipe.Ingredients){
+            IngredientsInput.Text += ingredient.Amount + " " + ingredient.Measurement + " " + ingredient.Name + "\n";
+        }        
+    }
+
     public void DeleteEntry(object sender, RoutedEventArgs args){
-        if (SelectedRecipe != null){
-            db.Remove(SelectedRecipe);
-            db.SaveChanges();
+        if (SelectedRecipes[SelectedIndex] != null){
+            RecipeManager.DB.Remove(SelectedRecipes[SelectedIndex]);
+            RecipeManager.DB.SaveChanges();
         }
         ResetForm(sender, args);
+    }
+
+    public void UpdateImagePath(object sender, KeyEventArgs args){
+        if (args.Key != Key.Return || String.IsNullOrEmpty(ImageFolderInput.Text)){
+            return;
+        }
+        string? folderPath = ImageFolderInput.Text;
+        if (!folderPath.EndsWith('/') || !folderPath.EndsWith('\\')){
+            folderPath += "/";
+        }
+        if (Directory.Exists(folderPath)){
+            RecipeManager.Instance.ImageFolderPath = folderPath;
+            var folder = Environment.SpecialFolder.LocalApplicationData;
+            var path = Environment.GetFolderPath(folder);
+            string SettingsPath = Path.Join(path, "RecipeBrowser/RecipeBrowserSettings.txt");
+            StreamWriter SettingsWriter = new(SettingsPath, false);
+            SettingsWriter.Write(folderPath);
+            SettingsWriter.Close();
+            ImageFolderInput.Text = "";
+        }
+        else {
+            Console.WriteLine(ImageFolderInput + " is not a valid directory");
+        }
     }
 
 }

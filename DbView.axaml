@@ -4,9 +4,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" x:Class="Recipe_Browser.DbView">   
         <ScrollViewer>
                 <StackPanel>
-                        <StackPanel Margin="10">
-                                <TextBox Name="DbSearch" Watermark="Recipe Search" KeyUp="SearchRecipes"></TextBox>
-                        </StackPanel> 
+                        <Grid ColumnDefinitions="0.5* 9* 0.5*" Margin="10">
+                                <Button Grid.Column="0" Name="PrevRecipeButton" Content="Back" Click="ChangeRecipe"/>
+                                <TextBox Grid.Column="1" Name="DbSearch" Watermark="Recipe Search" KeyUp="SearchRecipes"></TextBox>
+                                <Button Grid.Column="2" Name="NextRecipeButton" Content="Next" HorizontalAlignment="Right" Click="ChangeRecipe"/>
+                        </Grid>
                         <Grid ColumnDefinitions= "1* 5* 1* 5*">
                                 <TextBlock Grid.Column="0" Margin="0 0 5 0">Name: </TextBlock>
                                 <TextBox Grid.Column="1" Name="RecipeNameInput"></TextBox>
@@ -33,6 +35,10 @@
                                 <Button Click="DeleteEntry" Name="DeleteButton" Content="Delete"/>
                                 <Button Click="ResetForm" Name="FormReset" Content="Reset" Margin="10 0 10 0"/>
                                 <Button Click="SaveEntry" Name="FormSave" Content="Save"/>
+                        </StackPanel>
+                        <StackPanel Margin="10">
+                                <TextBlock>Change Image Folder Path: </TextBlock>
+                                <TextBox Name="ImageFolderInput" Watermark="Input Path Here. Hit Enter to Update Path in Settings" KeyUp="UpdateImagePath"></TextBox>
                         </StackPanel>
                 </StackPanel>
         </ScrollViewer>    

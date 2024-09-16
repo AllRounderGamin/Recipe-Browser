@@ -18,11 +18,10 @@
                                         <Carousel Name="RecipeImages" Height="300" Width="300">
                                                 <Carousel.PageTransition >
                                                         <CompositePageTransition>
-                                                        <PageSlide Duration="0:00:00.500" Orientation="Horizontal" />
+                                                        <PageSlide Duration="0:00:00.250" Orientation="Horizontal" />
                                                         </CompositePageTransition>
                                                 </Carousel.PageTransition>
                                                 <Carousel.Items>
-                                                        <Image Source="/Assets/PlaceholderCake.jpeg"/>
                                                         <Image Source="/Assets/PlaceholderCake.jpeg"/>
                                                 </Carousel.Items>
                                         </Carousel>
